@@ -16,7 +16,7 @@ RUN --mount=type=cache,id=cache-uv,target=/root/.cache/uv \
 COPY . /app
 
 # Install all dependencies
-RUN --mount=type=cache,id=cache-uv,target=/root/.cache/uv \
+RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 # Expose port 8005 for FastMCP
