@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     name="Banking FastMCP server",
     instructions="You are a banking MCP server which assist users to interact with their account",
+    stateless_http=True,
 )
 mcp.add_middleware(ToolCallMiddleware())
 
