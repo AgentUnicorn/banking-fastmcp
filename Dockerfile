@@ -1,27 +1,24 @@
 # Use the official UV Python image
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Copy uv binary (for compatibility)
+# Copy uv binary
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
+# Set working directory
 WORKDIR /app
 
-# Pre-cache dependencies based on lockfile
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+# Copy only lock and config first (for better caching)
+COPY uv.lock pyproject.toml ./
 
-# Copy project files
-COPY . /app
+# Install dependencies (no mount flags)
+RUN uv sync --locked --no-install-project
 
-# Install all dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
+# Copy entire project
+COPY . .
 
-# Expose port 8005 for FastMCP
+# Expose FastMCP port
 EXPOSE 8005
 
-# Use environment variable for Railway’s dynamic port (fallback to 8005)
+# Run the server (Railway sets PORT automatically)
 CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "${PORT:-8005}"]
 
