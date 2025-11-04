@@ -20,5 +20,5 @@ COPY . .
 EXPOSE 8005
 
 # Run the server (Railway sets PORT automatically)
-CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "${PORT:-8005}"]
+CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8005", "--log-level", "info"]
 
