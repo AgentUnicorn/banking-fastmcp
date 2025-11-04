@@ -29,7 +29,7 @@ app.add_middleware(
     allow_credentials=True,  # Allow cookies and authorization headers
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Allow all headers
-    expose_headers=["*"],
+    expose_headers=["mcp-session-id"],
 )
 
 

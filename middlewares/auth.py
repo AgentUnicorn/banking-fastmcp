@@ -32,7 +32,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         try:
             auth_header = request.headers.get("Authorization")
-            logger.info("Authorization: %s", auth_header)
             if not auth_header or not auth_header.startswith("Bearer "):
                 raise HTTPException(
                     status_code=401, detail="Missing or invalid authorization header"
