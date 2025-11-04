@@ -1,6 +1,8 @@
 import logging
 from typing import Any, Optional
 
+from fastmcp import Context
+
 from database.manager import BankingDatabase
 from database.models import Transaction
 from services.auth import AuthService
@@ -37,7 +39,6 @@ async def get_account_info() -> dict[str, Any]:
             "currency": "VND"
         }
     """
-
     try:
         email = AuthService.get_current_user_email()
         logger.info("Fetching account info for: %s", email)

@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from fastmcp.server.dependencies import get_access_token
+from fastmcp.server.dependencies import get_access_token, get_context
 
 logger = logging.getLogger("mcp.auth.service")
 
@@ -33,18 +33,13 @@ class AuthService:
             >>> print(email)
             'user@example.com'
         """
-        token = get_access_token()
+        context = get_context()
+        user = context.get_state("user")
 
-        if token is None:
-            logger.error("No access token found in request")
-            raise ValueError("Authentication required. No access token provided.")
-
-        email = token.claims.get("email")
+        email = user.get("email")
 
         if not email:
-            logger.error(
-                "Email claim not found in token. Token claims: %s", token.claims.keys()
-            )
+            logger.error("Email not exist in context")
             raise ValueError("Email not found in access token. Token may be invalid.")
 
         logger.info("Authenticated user: %s", email)
@@ -66,18 +61,12 @@ class AuthService:
         Raises:
             ValueError: If no token is present
         """
-        token = get_access_token()
-
-        if token is None:
-            logger.error("No access token found in request")
-            raise ValueError("Authentication required. No access token provided.")
+        context = get_context()
+        user = context.get_state("user")
 
         user_info = {
-            "email": token.claims.get("email"),
-            "sub": token.claims.get("sub"),
-            "name": token.claims.get("name"),
-            "picture": token.claims.get("picture"),
-            "locale": token.claims.get("locale"),
+            "email": user.get("email"),
+            "name": user.get("name"),
         }
 
         logger.info("Retrieved user info for: %s", user_info.get("email"))
