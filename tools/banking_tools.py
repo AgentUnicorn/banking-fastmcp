@@ -9,6 +9,7 @@ from services.auth import AuthService
 
 logger = logging.getLogger("mcp.tools.banking")
 
+
 db = BankingDatabase()
 
 
@@ -40,19 +41,43 @@ async def get_account_info() -> dict[str, Any]:
         }
     """
     try:
-        email = AuthService.get_current_user_email()
-        logger.info("Fetching account info for: %s", email)
+        user_info = AuthService.get_current_user_info()
+        logger.info("Fetching account info for: %s", user_info)
+        if not user_info:
+            return {"error": "User info is empty"}
 
+        email = user_info.get("email")
         account = db.get_account_by_email(email)
-        if not account:
-            return {"error": "Account associate with this email is not found"}
+        if account:
+            return {
+                "account_number": account.account_number,
+                "account_name": account.account_name,
+                "balance": f"{account.balance:,.0f}",
+                "currency": account.currency,
+            }
 
-        return {
-            "account_number": account.account_number,
-            "account_name": account.account_name,
-            "balance": f"{account.balance:,.0f}",
-            "currency": account.currency,
-        }
+        try:
+            account = db.create_account(
+                email,
+                user_info.get("name"),
+            )
+            logger.info(
+                "New account created successfully: %s (account_number: %s)",
+                email,
+                account.account_number,
+            )
+            return {
+                "account_number": account.account_number,
+                "account_name": account.account_name,
+                "balance": f"{account.balance:,.0f}",
+                "currency": account.currency,
+            }
+        except Exception as e:
+            logger.error(
+                "Failed to create account for %s: %s", email, str(e), exc_info=True
+            )
+            raise Exception(f"Failed to create account: {str(e)}")
+
     except ValueError as e:
         logger.error("Authentication error: %s", str(e))
         return {"error": str(e)}
@@ -61,7 +86,7 @@ async def get_account_info() -> dict[str, Any]:
         return {"error": f"System error: {str(e)}"}
 
 
-async def get_transactions(account_number: int, limit: int = 10):
+async def get_transactions(limit: int = 10):
     """
     Get transaction history for a specific account.
 
@@ -69,7 +94,6 @@ async def get_transactions(account_number: int, limit: int = 10):
     sorted by date (most recent first).
 
     Args:
-        account_number: The account number to get transactions for
         limit: Maximum number of transactions to return (default: 10, max: 100)
 
     Returns:
@@ -129,7 +153,6 @@ async def get_transactions(account_number: int, limit: int = 10):
 
 
 async def transfer_money(
-    from_account_number: int,
     to_account_number: int,
     amount: float,
     description: str,
@@ -226,7 +249,6 @@ async def transfer_money(
 
 
 async def add_saved_account(
-    owner_account_id: int,
     account_number: int,
     account_name: str,
     bank_name: str,
@@ -309,15 +331,12 @@ async def add_saved_account(
         return {"status": "failed", "message": f"Lỗi hệ thống: {str(e)}"}
 
 
-async def list_saved_account(email: str):
+async def list_saved_account():
     """
     List all saved recipients for a user's account.
 
     Retrieves all recipients that have been saved for quick transfers.
     These are accounts that the user frequently transfers money to.
-
-    Args:
-        email: The email address of the account owner
 
     Returns:
         dict containing:
@@ -329,7 +348,7 @@ async def list_saved_account(email: str):
             - message (str): Error message if account not found
 
     Example:
-        >>> await list_saved_account("user@example.com")
+        >>> await list_saved_account()
         {
             "total_recipients": 2,
             "recipients": [
@@ -376,4 +395,20 @@ async def list_saved_account(email: str):
         return {"error": str(e)}
     except Exception as e:
         logger.error("Unexpected error listing recipients: %s", str(e), exc_info=True)
+        return {"error": f"System error: {str(e)}"}
+
+
+async def update_user_info(name: str):
+    try:
+        email = AuthService.get_current_user_email()
+        db.update_user_info(email, name)
+        return {
+            "success": True,
+            "message": "User and account info updated successfully",
+        }
+    except ValueError as e:
+        logger.error("Authentication error: %s", str(e))
+        return {"error": str(e)}
+    except Exception as e:
+        logger.error("Unexpected error update account info: %s", str(e), exc_info=True)
         return {"error": f"System error: {str(e)}"}
