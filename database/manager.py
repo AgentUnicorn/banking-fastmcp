@@ -277,10 +277,12 @@ class BankingDatabase:
         cursor.execute(
             f"""
             SELECt * FROM banks
-            WHERE name LIKE '%{bank_name}%' OR short_name LIKE '%bank_name%' OR code LIKE '%bank_name%'
+            WHERE name LIKE '%{bank_name}%' OR short_name LIKE '%{bank_name}%' OR code LIKE '%{bank_name}%'
             """
         )
 
         bank = cursor.fetchone()
         conn.close()
+        if not bank:
+            return None
         return Bank(**dict(bank))
