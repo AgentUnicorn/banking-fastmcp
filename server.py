@@ -14,7 +14,7 @@ from middlewares.auth import AuthMiddleware
 logger = logging.getLogger(__name__)
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 logging.getLogger("fastmcp").setLevel(logging.DEBUG)
 logging.getLogger("fastmcp.server.auth").setLevel(logging.DEBUG)
