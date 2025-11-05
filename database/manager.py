@@ -43,10 +43,8 @@ class BankingDatabase:
                 account_name NVARCHAR(100) NOT NULL,
                 balance DECIMAL(18,2) DEFAULT 0.00,
                 currency VARCHAR(10) NOT NULL DEFAULT 'VND',
-                bank_id INTEGER,
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
-                updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
-                FOREIGN KEY (bank_id) REFERENCES banks(id)
+                updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP)
             );
         """
         )
@@ -100,9 +98,9 @@ class BankingDatabase:
         # Sample accounts
         cursor.execute(
             """
-            INSERT INTO accounts (email, account_number, account_name, balance, bank_id)
+            INSERT INTO accounts (email, account_number, account_name, balance)
             VALUES 
-                ('superslap1999@gmail.com', '1234567890', 'Nguyễn Phương Bình', 50000000, 17);
+                ('example@com.vn', '1234567890', 'Nguyễn Văn A', 500000000);
         """
         )
 
@@ -110,7 +108,7 @@ class BankingDatabase:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, account_number, account_name, balance, currency, bank_id, created_at, updated_at FROM accounts"
+            "SELECT id, account_number, account_name, balance, currency, created_at, updated_at FROM accounts"
         )
         rows = cursor.fetchall()
         conn.close()
@@ -120,7 +118,7 @@ class BankingDatabase:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, email, account_number, account_name, balance, currency, bank_id, created_at, updated_at FROM accounts WHERE email = ?",
+            "SELECT id, email, account_number, account_name, balance, currency, created_at, updated_at FROM accounts WHERE email = ?",
             (email,),
         )
         row = cursor.fetchone()
@@ -131,7 +129,7 @@ class BankingDatabase:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, email, account_number, account_name, balance, currency, bank_id, created_at, updated_at FROM accounts WHERE account_number = ?",
+            "SELECT id, email, account_number, account_name, balance, currency, created_at, updated_at FROM accounts WHERE account_number = ?",
             (account_number,),
         )
         row = cursor.fetchone()

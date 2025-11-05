@@ -26,7 +26,6 @@ class AccountBase(BaseModel):
     account_name: str
     balance: float = 0.00
     currency: str = "VND"
-    bank_id: int
 
 
 class AccountCreate(AccountBase):
