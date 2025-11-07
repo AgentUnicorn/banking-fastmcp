@@ -213,12 +213,9 @@ class BankingDatabase:
 
             # Perform transfer
             new_balance = sender["balance"] - amount
-            logger.info(
-                "Update balance: %s",
-                sender["balance"],
-                new_balance,
-                from_account_number,
-            )
+            logger.info("Current balance:", sender["balance"])
+            logger.info("New balance:", new_balance)
+            logger.info("From account number:", from_account_number)
             cursor.execute(
                 "UPDATE accounts SET balance = ? WHERE account_number = ?",
                 (new_balance, from_account_number),
