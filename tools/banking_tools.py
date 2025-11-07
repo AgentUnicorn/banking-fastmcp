@@ -260,6 +260,13 @@ async def add_saved_account(
                 "message": f"Không tìm thấy ngân hàng: {bank_name}",
             }
 
+        existed = db.get_saved_recipient(account.id, account_number)
+        if existed:
+            return {
+                "status": "failed",
+                "message": f"Không tìm thấy ngân hàng: {bank_name}",
+            }
+
         # Add recipient
         recipient = db.add_saved_recipient(
             account.id, account_number, account_name, bank.id

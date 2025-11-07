@@ -243,6 +243,24 @@ class BankingDatabase:
         conn.close()
         return [SavedRecipient(**dict(row)) for row in rows]
 
+    def get_saved_recipient(
+        self, owner_account_id: int, account_number: int
+    ) -> [SavedRecipient]:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT sr.id, sr.owner_account_id, sr.account_number, sr.account_name, sr.bank_id, b.short_name as bank_name, sr.created_at
+            FROM saved_recipients as sr 
+            LEFT JOIN banks as b
+            WHERE b.id = sr.bank_id AND owner_account_id = ? AND sr.account_number = ?
+            """,
+            (owner_account_id, account_number),
+        )
+        row = cursor.fetchone()
+        conn.close()
+        return SavedRecipient(**dict(row))
+
     def add_saved_recipient(
         self,
         owner_account_id: int,
