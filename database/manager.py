@@ -245,7 +245,7 @@ class BankingDatabase:
 
     def get_saved_recipient(
         self, owner_account_id: int, account_number: int
-    ) -> SavedRecipient:
+    ) -> SavedRecipient | None:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -259,6 +259,8 @@ class BankingDatabase:
         )
         row = cursor.fetchone()
         conn.close()
+        if not row:
+            return None
         return SavedRecipient(**dict(row))
 
     def add_saved_recipient(
