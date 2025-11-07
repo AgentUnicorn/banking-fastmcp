@@ -220,7 +220,7 @@ class BankingDatabase:
                 from_account_number,
             )
             cursor.execute(
-                "UPDATE accounts SET balance = new_balance WHERE account_number = ?",
+                "UPDATE accounts SET balance = ? WHERE account_number = ?",
                 (new_balance, from_account_number),
             )
 
