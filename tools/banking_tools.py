@@ -1,10 +1,7 @@
 import logging
-from typing import Any, Optional
-
-from fastmcp import Context
+from typing import Any
 
 from database.manager import BankingDatabase
-from database.models import Transaction
 from services.auth import AuthService
 
 logger = logging.getLogger("mcp.tools.banking")
@@ -14,28 +11,24 @@ db = BankingDatabase()
 
 async def get_account_info() -> dict[str, Any]:
     """
-    Retrieve account information by email address.
+    Retrieve the currently authenticated user's banking account information.
 
-    This function looks up a bank account using the account holder's email
-    and returns their account details including balance and account number.
-
-    Args:
-        email: The email address associated with the account (e.g., "user@example.com")
+    This function uses the authenticated user's email (via `AuthService.get_current_user_email()`)
+    to fetch their account record from the database.
 
     Returns:
-        dict containing:
-            - account_number (int): The account number
-            - account_name (str): Account holder's full name
-            - balance (str): Current balance formatted with thousand separators
-            - currency (str): Currency code (e.g., "VND")
-            - error (str): Error message if account not found
+        dict: A dictionary containing:
+            - "account_number" (int): The user's account number.
+            - "account_name" (str): The name associated with the account.
+            - "balance" (str): Current account balance, formatted with commas.
+            - "currency" (str): The currency of the account.
+        If the account is not found or an error occurs, returns {"error": <message>}.
 
     Example:
-        >>> await get_account_info("user@example.com")
         {
-            "account_number": 1234567890,
-            "account_name": "Nguyễn Văn A",
-            "balance": "50,000,000",
+            "account_number": 123456789,
+            "account_name": "John Doe",
+            "balance": "12,000,000",
             "currency": "VND"
         }
     """
@@ -61,39 +54,33 @@ async def get_account_info() -> dict[str, Any]:
         return {"error": f"System error: {str(e)}"}
 
 
-async def get_transactions(account_number: int, limit: int = 10):
+async def get_transactions(limit: int = 10):
     """
-    Get transaction history for a specific account.
-
-    Retrieves both incoming and outgoing transactions for the specified account,
-    sorted by date (most recent first).
+    Retrieve recent transactions for the authenticated user's account.
 
     Args:
-        account_number: The account number to get transactions for
-        limit: Maximum number of transactions to return (default: 10, max: 100)
+        limit (int, optional): The maximum number of transactions to return. Defaults to 10.
 
     Returns:
-        dict containing:
-            - account_number (int): The queried account number
-            - total_transactions (int): Number of transactions returned
-            - transactions (list): List of transaction objects with:
-                - type (str): Transaction type (e.g., "transfer", "deposit")
-                - amount (float): Transaction amount
-                - description (str): Transaction note/description
-                - recipient (int): Recipient account ID (for transfers)
+        dict: Contains:
+            - "email" (str): The user's email.
+            - "account_number" (int): The account number.
+            - "total_transactions" (int): Number of transactions returned.
+            - "transactions" (list): Each item includes:
+                - "type" (str): Transaction type (e.g., 'deposit', 'withdrawal').
+                - "amount" (float): Transaction amount.
+                - "description" (str): Transaction description.
+                - "recipient" (int): Recipient account number if applicable.
+        If an error occurs, returns {"error": <message>}.
 
     Example:
-        >>> await get_transactions(1234567890, limit=5)
         {
-            "account_number": 1234567890,
-            "total_transactions": 5,
+            "email": "user@example.com",
+            "account_number": 987654321,
+            "total_transactions": 2,
             "transactions": [
-                {
-                    "type": "transfer",
-                    "amount": 100000.0,
-                    "description": "Payment for lunch",
-                    "recipient": 987654321
-                }
+                {"type": "transfer", "amount": 500000, "description": "Rent", "recipient": 11223344},
+                {"type": "deposit", "amount": 1500000, "description": "Salary", "recipient": null}
             ]
         }
     """
@@ -129,47 +116,39 @@ async def get_transactions(account_number: int, limit: int = 10):
 
 
 async def transfer_money(
-    from_account_number: int,
     to_account_number: int,
     amount: float,
     description: str,
 ):
     """
-    Transfer money from one account to another.
-
-    This function performs a bank transfer between two accounts. The recipient
-    must be in the sender's saved recipients list. The operation is atomic -
-    it either completes fully or fails without any changes.
-
-    IMPORTANT:
-    - The recipient account must be added to saved recipients first
-    - Sender must have sufficient balance
-    - Amount must be positive
+    Transfer money from the authenticated user's account to another account.
 
     Args:
-        from_account_number: Sender's account number
-        to_account_number: Recipient's account number (must be saved recipient)
-        amount: Amount to transfer in VND (must be > 0)
-        description: Transfer note/description (e.g., "Rent payment", "Gift")
+        to_account_number (int): The destination account number.
+        amount (float): The amount to transfer.
+        description (str): The transaction description (e.g., "Rent payment").
 
     Returns:
-        dict containing:
-            - status (str): "success" or "failed"
-            - message (str): Vietnamese message describing the result
-            - from_account (int): Sender's account number (on success)
-            - to_account (int): Recipient's account number (on success)
-            - amount (str): Formatted amount with currency (on success)
-            - description (str): Transaction description (on success)
+        dict: Contains:
+            - "status" (str): "success" or "failed".
+            - "message" (str): Description of the result.
+            - On success, also includes:
+                - "from_email" (str)
+                - "from_account" (int)
+                - "to_account" (int)
+                - "amount" (str): Formatted amount with currency.
+                - "description" (str)
+        On failure, returns {"status": "failed", "message": <error>}.
 
     Example:
-        >>> await transfer_money(1234567890, 9876543210, 500000, "Trả tiền cơm")
         {
             "status": "success",
             "message": "Chuyển khoản thành công!",
-            "from_account": 1234567890,
-            "to_account": 9876543210,
+            "from_email": "user@example.com",
+            "from_account": 11112222,
+            "to_account": 33334444,
             "amount": "500,000 VND",
-            "description": "Trả tiền cơm"
+            "description": "Lunch payment"
         }
     """
     try:
@@ -226,41 +205,38 @@ async def transfer_money(
 
 
 async def add_saved_account(
-    owner_account_id: int,
     account_number: int,
     account_name: str,
     bank_name: str,
 ):
     """
-    Add a new recipient to saved accounts for quick future transfers.
-
-    This function saves a recipient's account information so they can be
-    easily selected for future transfers without re-entering details.
+    Save a recipient account to the authenticated user's saved recipients list.
 
     Args:
-        owner_account_id: The ID of the account saving this recipient
-        account_number: Recipient's account number
-        account_name: Recipient's full name (as registered with their bank)
-        bank_name: Recipient's bank name (can be partial, e.g., "Vietcombank" or "VCB")
+        account_number (int): The recipient's account number.
+        account_name (str): The recipient's account holder name.
+        bank_name (str): The recipient's bank name.
 
     Returns:
-        dict containing:
-            - status (str): "success" or "failed"
-            - message (str): Vietnamese message describing the result
-            - recipient (dict): Saved recipient details (on success):
-                - account_number (int): Recipient's account number
-                - account_name (str): Recipient's name
-                - bank_name (str): Full bank name
+        dict: Contains:
+            - "status" (str): "success" or "failed".
+            - "message" (str): Description of the operation.
+            - On success:
+                - "owner_email" (str)
+                - "recipient" (dict):
+                    - "account_number" (int)
+                    - "account_name" (str)
+                    - "bank_name" (str)
 
     Example:
-        >>> await add_saved_account(1, 9876543210, "Trần Thị B", "Vietcombank")
         {
             "status": "success",
             "message": "Đã thêm người nhận mới!",
+            "owner_email": "user@example.com",
             "recipient": {
-                "account_number": 9876543210,
-                "account_name": "Trần Thị B",
-                "bank_name": "Ngân hàng TMCP Ngoại Thương Việt Nam"
+                "account_number": 55556666,
+                "account_name": "Nguyen Van A",
+                "bank_name": "Vietcombank"
             }
         }
     """
@@ -309,40 +285,27 @@ async def add_saved_account(
         return {"status": "failed", "message": f"Lỗi hệ thống: {str(e)}"}
 
 
-async def list_saved_account(email: str):
+async def list_saved_account():
     """
-    List all saved recipients for a user's account.
-
-    Retrieves all recipients that have been saved for quick transfers.
-    These are accounts that the user frequently transfers money to.
-
-    Args:
-        email: The email address of the account owner
+    List all saved recipient accounts associated with the authenticated user's account.
 
     Returns:
-        dict containing:
-            - total_recipients (int): Number of saved recipients
-            - recipients (list): List of saved recipient objects with:
-                - account_number (int): Recipient's account number
-                - account_name (str): Recipient's full name
-                - bank_name (str): Recipient's bank name
-            - message (str): Error message if account not found
+        dict: Contains:
+            - "email" (str): The user's email.
+            - "total_recipients" (int): Number of saved recipients.
+            - "recipients" (list): Each recipient includes:
+                - "account_number" (int)
+                - "account_name" (str)
+                - "bank_name" (str)
+        If an error occurs, returns {"error": <message>}.
 
     Example:
-        >>> await list_saved_account("user@example.com")
         {
+            "email": "user@example.com",
             "total_recipients": 2,
             "recipients": [
-                {
-                    "account_number": 9876543210,
-                    "account_name": "Trần Thị B",
-                    "bank_name": "Vietcombank"
-                },
-                {
-                    "account_number": 1111222233,
-                    "account_name": "Lê Văn C",
-                    "bank_name": "Techcombank"
-                }
+                {"account_number": 55556666, "account_name": "Nguyen Van A", "bank_name": "Vietcombank"},
+                {"account_number": 77778888, "account_name": "Tran Thi B", "bank_name": "Techcombank"}
             ]
         }
     """

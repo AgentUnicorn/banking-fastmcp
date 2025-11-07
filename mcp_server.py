@@ -24,23 +24,46 @@ mcp.add_middleware(ToolCallMiddleware())
 # Tools
 mcp.tool(
     name="get_account_info",
-    description="Get account information for the currently authenticated user. Returns account number, name, balance, and currency. Authentication is automatic via JWT token.",
+    description=(
+        "Retrieve the authenticated user's banking account details using their JWT token. "
+        "Returns account number, account name, formatted balance, and currency type. "
+        "If the account is not found or authentication fails, an error message is returned."
+    ),
 )(get_account_info)
 mcp.tool(
     name="get_transactions",
-    description="Get transaction history for the authenticated user's account. Shows recent transfers with amounts and descriptions. Use limit parameter to control how many transactions to retrieve. Authentication is automatic.",
+    description=(
+        "Retrieve recent transactions for the authenticated user's account. "
+        "Returns a list of recent transfers including type, amount, description, and recipient account. "
+        "Accepts an optional 'limit' parameter to control how many transactions to retrieve (default: 10). "
+        "Authentication is handled automatically via JWT token."
+    ),
 )(get_transactions)
 mcp.tool(
     name="transfer_money",
-    description="Transfer money from the authenticated user's account to a saved recipient. Automatically uses the sender's account from JWT token. Validates balance before transfer. Recipient must be in saved recipients list.",
+    description=(
+        "Transfer money from the authenticated user's account to another account. "
+        "Requires parameters: 'to_account_number' (int), 'amount' (float), and 'description' (str). "
+        "Validates balance before transfer and returns a structured result including status, message, "
+        "source and destination accounts, amount, and description. Authentication is automatic via JWT token."
+    ),
 )(transfer_money)
 mcp.tool(
     name="add_saved_account",
-    description="Add a new recipient to the authenticated user's saved accounts for future quick transfers. Requires recipient's account number, name, and bank name. Bank name can be partial (e.g., 'VCB' for Vietcombank). Authentication is automatic.",
+    description=(
+        "Add a new recipient to the authenticated user's saved recipients list. "
+        "Requires recipient details: 'account_number', 'account_name', and 'bank_name'. "
+        "Supports partial bank name matching (e.g., 'VCB' for Vietcombank). "
+        "Returns confirmation with saved recipient details. Authentication is automatic via JWT token."
+    ),
 )(add_saved_account)
 mcp.tool(
     name="list_saved_account",
-    description="List all saved recipients for the authenticated user. Shows recipient account numbers, names, and bank names. Useful before making transfers to see available recipients. Authentication is automatic.",
+    description=(
+        "List all saved recipients associated with the authenticated user's account. "
+        "Returns recipient account numbers, names, and bank names for quick reference before making transfers. "
+        "Authentication is automatic via JWT token."
+    ),
 )(list_saved_account)
 # mcp.tool(name="get_time", description="Return current time")(get_time)
 # mcp.tool(
