@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+from fastmcp import Context
+
 from database.manager import BankingDatabase
 from services.auth import AuthService
 
@@ -9,7 +11,7 @@ logger = logging.getLogger("mcp.tools.banking")
 db = BankingDatabase()
 
 
-async def get_account_info() -> dict[str, Any]:
+async def get_account_info(ctx: Context, **kwargs) -> dict[str, Any]:
     """
     Retrieve the currently authenticated user's banking account information.
 
