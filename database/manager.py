@@ -64,7 +64,6 @@ class BankingDatabase:
                 date_issued TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
                 created_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP),
                 FOREIGN KEY (from_account_id) REFERENCES accounts(id),
-                FOREIGN KEY (to_account_id) REFERENCES accounts(id)
             );
         """
         )
