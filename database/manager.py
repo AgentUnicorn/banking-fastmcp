@@ -97,10 +97,18 @@ class BankingDatabase:
         # Sample accounts
         cursor.execute(
             """
-            INSERT INTO accounts (email, account_number, account_name, balance)
+            INSERT INTO accounts (id, email, account_number, account_name, balance)
             VALUES 
-                ('example@com.vn', '1234567890', 'Nguyễn Văn A', 500000000);
+                (1,'example@com.vn', '1234567890', 'Nguyễn Văn A', 500000000);
         """
+        )
+
+        cursor.execute(
+            """
+            INSERT INTO saved_recipients(owner_account_id, account_number, account_name, bank_id)
+            VALUES
+                (1, '1234567891', 'Nguyễn Phương Bình', 4);
+            """
         )
 
     def get_accounts(self) -> list[Account]:
@@ -201,8 +209,8 @@ class BankingDatabase:
 
             # Perform transfer
             cursor.execute(
-                "UPDATE accounts SET balance = balance - ? WHERE id = ?",
-                (amount, sender["id"]),
+                "UPDATE accounts SET balance = balance - ? WHERE account_number = ?",
+                (amount, from_account_number),
             )
             cursor.execute(
                 "UPDATE accounts SET balance = balance + ? WHERE id = ?",
