@@ -29,6 +29,7 @@ mcp.tool(
         "Returns account number, account name, formatted balance, and currency type. "
         "If the account is not found or authentication fails, an error message is returned."
     ),
+    exclude_args=["toolCallId"],
 )(get_account_info)
 mcp.tool(
     name="get_transactions",

@@ -1,8 +1,6 @@
 import logging
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
-
 from database.manager import BankingDatabase
 from services.auth import AuthService
 
@@ -11,11 +9,7 @@ logger = logging.getLogger("mcp.tools.banking")
 db = BankingDatabase()
 
 
-class BaseToolModel(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-
-async def get_account_info(data: BaseToolModel) -> dict[str, Any]:
+async def get_account_info() -> dict[str, Any]:
     """
     Retrieve the currently authenticated user's banking account information.
 
