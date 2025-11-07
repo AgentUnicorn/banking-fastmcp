@@ -10,6 +10,7 @@ class Settings:
     BASE_URL: str = os.environ.get("RS_BASE_URL", "http://localhost:8005")
     HOST: str = os.environ.get("RS_HOST", "localhost")
     PORT: int = int(os.environ.get("RS_PORT", "8005"))
+    DATABASE_URL: str = os.environ.get("DATABASE_URL", "banking.db")
     MCP_PATH: str = os.environ.get("MCP_PATH", "/mcp")
 
     GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID", "")

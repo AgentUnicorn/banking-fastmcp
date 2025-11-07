@@ -1,7 +1,10 @@
+import logging
 import sqlite3
 from typing import Optional
 
 from database.models import Account, Bank, SavedRecipient, Transaction
+
+logger = logging.getLogger(__name__)
 
 
 class BankingDatabase:
@@ -192,29 +195,33 @@ class BankingDatabase:
                 (from_account_number,),
             )
             sender = cursor.fetchone()
+            if not sender:
+                raise ValueError(f"Sender account not found: {from_account_number}")
 
             cursor.execute(
                 "SELECT id FROM saved_recipients WHERE account_number = ?",
                 (to_account_number,),
             )
             receiver = cursor.fetchone()
-
-            if not sender or not receiver:
+            if not receiver:
                 raise ValueError(
-                    f"Invalid account(s): {from_account_number if not sender else to_account_number}"
+                    f"Recipient not found in saved list: {to_account_number}"
                 )
 
             if sender["balance"] < amount:
                 raise ValueError("Insufficient balance")
 
             # Perform transfer
-            cursor.execute(
-                "UPDATE accounts SET balance = balance - ? WHERE account_number = ?",
-                (amount, from_account_number),
+            new_balance = sender["balance"] - amount
+            logger.info(
+                "Update balance: %s",
+                sender["balance"],
+                new_balance,
+                from_account_number,
             )
             cursor.execute(
-                "UPDATE accounts SET balance = balance + ? WHERE id = ?",
-                (amount, receiver["id"]),
+                "UPDATE accounts SET balance = new_balance WHERE account_number = ?",
+                (new_balance, from_account_number),
             )
 
             # Record transaction

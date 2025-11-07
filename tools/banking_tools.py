@@ -3,13 +3,14 @@ from typing import Any
 
 from fastmcp import Context
 
+from configs.config import settings
 from database.manager import BankingDatabase
 from services.auth import AuthService
 
 logger = logging.getLogger("mcp.tools.banking")
 
 
-db = BankingDatabase()
+db = BankingDatabase(settings.DATABASE_URL)
 
 
 async def get_account_info(
