@@ -8,6 +8,7 @@ from services.auth import AuthService
 
 logger = logging.getLogger("mcp.tools.banking")
 
+
 db = BankingDatabase()
 
 
@@ -58,7 +59,9 @@ async def get_account_info(
         return {"error": f"System error: {str(e)}"}
 
 
-async def get_transactions(limit: int = 10):
+async def get_transactions(
+    ctx: Context, toolCallId: str | None = None, limit: int = 10
+):
     """
     Retrieve recent transactions for the authenticated user's account.
 
@@ -123,6 +126,8 @@ async def transfer_money(
     to_account_number: int,
     amount: float,
     description: str,
+    ctx: Context,
+    toolCallId: str | None = None,
 ):
     """
     Transfer money from the authenticated user's account to another account.
@@ -212,6 +217,8 @@ async def add_saved_account(
     account_number: int,
     account_name: str,
     bank_name: str,
+    ctx: Context,
+    toolCallId: str | None = None,
 ):
     """
     Save a recipient account to the authenticated user's saved recipients list.
@@ -296,7 +303,7 @@ async def add_saved_account(
         return {"status": "failed", "message": f"Lỗi hệ thống: {str(e)}"}
 
 
-async def list_saved_account():
+async def list_saved_account(ctx: Context, toolCallId: str | None = None):
     """
     List all saved recipient accounts associated with the authenticated user's account.
 
