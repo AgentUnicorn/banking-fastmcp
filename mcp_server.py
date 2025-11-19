@@ -4,6 +4,7 @@ from fastmcp import FastMCP
 
 from configs.config import settings
 from middlewares.tool_call import ToolCallMiddleware
+from resources.banking_resources import list_banks
 from tools.banking_tools import (
     add_saved_account,
     get_account_info,
@@ -65,74 +66,11 @@ mcp.tool(
         "Authentication is automatic via JWT token."
     ),
 )(list_saved_account)
-# mcp.tool(name="get_time", description="Return current time")(get_time)
-# mcp.tool(
-#     name="get_user_info", description="Return authenticate user info include email"
-# )(get_user_info)
-
-# Prompts
 
 # Resources
-
-
-# Custom Routes
-# @mcp.custom_route("/healthz", methods=["GET"])
-# async def healthz(request: Request) -> JSONResponse:
-#     return JSONResponse(
-#         {
-#             "status": "ok",
-#             "base_url": settings.BASE_URL,
-#             "mcp_path": settings.MCP_PATH,
-#             "resource": settings.RESOURCE,
-#             "scopes": settings.REQUIRED_SCOPES,
-#         }
-#     )
-#
-#
-# @mcp.custom_route("/.well-known/jwks.json", methods=["GET"])
-# async def jwks(request: Request) -> JSONResponse:
-#     """
-#     Serve the JWKS (JSON Web Key Set) for token verification
-#     """
-#     import json
-#
-#     # Use JWKS_PATH from environment or default location
-#     jwks_path = (
-#         settings.JWKS_PATH
-#         if os.path.isabs(settings.JWKS_PATH)
-#         else os.path.join(os.path.dirname(__file__), settings.JWKS_PATH)
-#     )
-#
-#     try:
-#         with open(jwks_path, "r") as f:
-#             jwks_data = json.load(f)
-#         return JSONResponse(jwks_data)
-#     except FileNotFoundError:
-#         logger.error("jwks.json file not found at %s", jwks_path)
-#         return JSONResponse({"error": "JWKS not found"}, status_code=404)
-#     except json.JSONDecodeError:
-#         logger.error("Invalid JSON in jwks.json")
-#         return JSONResponse({"error": "Invalid JWKS format"}, status_code=500)
-#
-#
-# @mcp.custom_route("/debug/auth", methods=["GET"])
-# async def debug_auth(request: Request) -> JSONResponse:
-#     """
-#     Debug endpoint to check authentication headers and token
-#     """
-#     headers = dict(request.headers)
-#     auth_header = headers.get("authorization", "No Authorization header")
-#
-#     debug_info = {
-#         "has_auth_header": "authorization" in headers,
-#         "auth_header": (
-#             auth_header[:50] + "..." if len(auth_header) > 50 else auth_header
-#         ),
-#         "jwks_uri": f"{settings.BASE_URL}/.well-known/jwks.json",
-#         "issuer": settings.BASE_URL,
-#         "audience": settings.BASE_URL,
-#     }
-#
-#     logger.info("Debug auth request: %s", debug_info)
-#
-#     return JSONResponse(debug_info)
+mcp.resource(
+    uri="resource://bank/list",
+    name="List available banks",
+    description="List all available banks in the database",
+    mime_type="application/json",
+)(list_banks)

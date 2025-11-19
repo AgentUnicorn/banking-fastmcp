@@ -3,14 +3,10 @@ from typing import Any
 
 from fastmcp import Context
 
-from configs.config import settings
-from database.manager import BankingDatabase
+from database.manager import db
 from services.auth import AuthService
 
 logger = logging.getLogger("mcp.tools.banking")
-
-
-db = BankingDatabase(settings.DATABASE_URL)
 
 
 async def get_account_info(
@@ -47,7 +43,7 @@ async def get_account_info(
             return {"error": "Account associate with this email is not found"}
 
         return {
-            "account_number": account.account_number,
+            "account_number": str(account.account_number),
             "account_name": account.account_name,
             "balance": f"{account.balance:,.0f}",
             "currency": account.currency,
@@ -103,14 +99,19 @@ async def get_transactions(
         transactions = db.get_transactions(account.account_number, limit)
         return {
             "email": email,
-            "account_number": account.account_number,
+            "account_number": str(account.account_number),
             "total_transactions": len(transactions),
             "transactions": [
                 {
                     "type": t.type,
                     "amount": t.amount,
+                    "currency": t.currency,
                     "description": t.description,
                     "recipient": t.to_account_id,
+                    "recipient_account_number": str(t.recipient_account_number),
+                    "recipient_account_name": t.recipient_account_name,
+                    "bank_id": t.recipient_bank_id,
+                    "bank_name": f"{t.recipient_bank_name} {t.recipient_bank_short_name}",
                 }
                 for t in transactions
             ],
@@ -198,8 +199,8 @@ async def transfer_money(
                 "status": "success",
                 "message": "Chuyển khoản thành công!",
                 "from_email": email,
-                "from_account": account.account_number,
-                "to_account": to_account_number,
+                "from_account": str(account.account_number),
+                "to_account": str(to_account_number),
                 "amount": f"{amount:,.0f} VND",
                 "description": description,
             }
@@ -290,7 +291,7 @@ async def add_saved_account(
             "message": "Đã thêm người nhận mới!",
             "owner_email": email,
             "recipient": {
-                "account_number": recipient.account_number,
+                "account_number": str(recipient.account_number),
                 "account_name": recipient.account_name,
                 "bank_name": bank.name,
             },
@@ -304,9 +305,10 @@ async def add_saved_account(
         return {"status": "failed", "message": f"Lỗi hệ thống: {str(e)}"}
 
 
-async def list_saved_account(ctx: Context, toolCallId: str | None = None):
+async def list_saved_account(ctx: Context, recipient_name: str | None = None, toolCallId: str | None = None):
     """
     List all saved recipient accounts associated with the authenticated user's account.
+    Can search recipient by their name
 
     Returns:
         dict: Contains:
@@ -339,13 +341,13 @@ async def list_saved_account(ctx: Context, toolCallId: str | None = None):
                 "email": email,
             }
 
-        recipients = db.get_saved_recipients(account.id)
+        recipients = db.get_saved_recipients(account.id, recipient_name)
         return {
             "email": email,
             "total_recipients": len(recipients),
             "recipients": [
                 {
-                    "account_number": r.account_number,
+                    "account_number": str(r.account_number),
                     "account_name": r.account_name,
                     "bank_name": r.bank_name,
                 }

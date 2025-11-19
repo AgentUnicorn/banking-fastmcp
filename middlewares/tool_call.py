@@ -27,29 +27,31 @@ class ToolCallMiddleware(Middleware):
         token = auth_header.split(" ")[1]
 
         decoded = jwt.decode(token, options={"verify_signature": False})
-        logger.info("DECORED: %s", decoded)
-
-        # validation_options = TokenValidationOptions(
-        #     issuer=settings.SCALEKIT_ENVIRONMENT_URL,
-        #     audience=[settings.SCALEKIT_AUDIENCE_NAME],
-        # )
-
-        # try:
-        # payload = scalekit_client.validate_token(token, options=validation_options)
-        # user_id = payload.get("sub")
-        #
-        # user_res, _ = scalekit_client.users.get_user(user_id)
-        # user_info = {
-        #     "user_id": user_id,
-        #     "email": user_res.user.email,
-        #     "name": user_res.user.user_profile.name,
-        # }
         user_info = {"email": decoded["email"], "name": decoded["name"]}
+
+        if settings.AUTHENTICATE_PROVIDER == "scalekit":
+            validation_options = TokenValidationOptions(
+                issuer=settings.SCALEKIT_ENVIRONMENT_URL,
+                audience=[settings.SCALEKIT_AUDIENCE_NAME],
+            )
+
+            try:
+                payload = scalekit_client.validate_token(
+                    token, options=validation_options
+                )
+                user_id = payload.get("sub")
+
+                user_res, _ = scalekit_client.users.get_user(user_id)
+                user_info = {
+                    "email": user_res.user.email,
+                    "name": user_res.user.user_profile.name,
+                }
+
+            except Exception as e:
+                logger.error("Error fetching user info: %s", e, exc_info=True)
+                raise HTTPException(status_code=401, detail="Token validation failed")
+
         logger.info("TOOL CALL: %s", user_info)
         context.fastmcp_context.set_state("user", user_info)
-
-        # except Exception as e:
-        #     logger.error("Error fetching user info: %s", e, exc_info=True)
-        #     raise HTTPException(status_code=401, detail="Token validation failed")
 
         return await call_next(context)
