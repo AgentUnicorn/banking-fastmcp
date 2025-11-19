@@ -12,13 +12,7 @@ from mcp_server import mcp
 from middlewares.auth import AuthMiddleware
 
 logger = logging.getLogger(__name__)
-
-
 logging.basicConfig(level=logging.DEBUG)
-
-logging.getLogger("fastmcp").setLevel(logging.DEBUG)
-logging.getLogger("fastmcp.server.auth").setLevel(logging.DEBUG)
-
 
 mcp_app = mcp.http_app(path=settings.MCP_PATH, transport="streamable-http")
 app = FastAPI(lifespan=mcp_app.lifespan)
@@ -35,6 +29,8 @@ app.add_middleware(
 
 @app.get("/.well-known/oauth-protected-resource/mcp")
 async def oauth_protected_resource_metadata():
+    if settings.AUTHENTICATE_PROVIDER == "jwt":
+        return
     return json.loads(settings.METADATA_JSON_RESPONSE)
 
 

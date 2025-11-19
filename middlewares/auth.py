@@ -28,7 +28,10 @@ scalekit_client = ScalekitClient(
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.startswith("/.well-known/"):
+        if (
+                request.url.path.startswith("/.well-known/")
+                or settings.AUTHENTICATE_PROVIDER == "jwt"
+        ):
             return await call_next(request)
 
         try:

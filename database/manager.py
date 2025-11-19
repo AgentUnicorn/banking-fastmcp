@@ -1,7 +1,8 @@
 import logging
 import sqlite3
-from typing import Optional
+from typing import Optional, List
 
+from configs.config import settings
 from database.models import Account, Bank, SavedRecipient, Transaction
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,7 @@ class BankingDatabase:
             """
             INSERT INTO accounts (id, email, account_number, account_name, balance)
             VALUES 
-                (1,'example@com.vn', '1234567890', 'Nguyễn Văn A', 500000000);
+                (1,'lam.vb@com.vn', '1234567890', 'Vương Bảo Lâm', 500000000);
         """
         )
 
@@ -110,7 +111,8 @@ class BankingDatabase:
             """
             INSERT INTO saved_recipients(owner_account_id, account_number, account_name, bank_id)
             VALUES
-                (1, '1234567891', 'Nguyễn Phương Bình', 4);
+                (1, '1234567891', 'Nguyễn Phương Bình', 4),
+                (1, '1234567892', 'Lý Minh Sơn', 21);
             """
         )
 
@@ -166,11 +168,33 @@ class BankingDatabase:
         # Get transactions where the account is sender or receiver
         cursor.execute(
             """
-            SELECT id, from_account_id, to_account_id, amount, currency, type, status, description, date_issued, created_at
-            FROM transactions
-            WHERE from_account_id = ? OR to_account_id = ?
-            ORDER BY date_issued DESC
-            LIMIT ?
+            SELECT 
+                t.id,
+                t.from_account_id,
+                t.to_account_id,
+                t.amount,
+                t.currency,
+                t.type,
+                t.status,
+                t.description,
+                t.date_issued,
+                t.created_at,
+                r.account_number AS recipient_account_number,
+                r.account_name AS recipient_account_name,
+                r.bank_id AS recipient_bank_id,
+                b.name AS recipient_bank_name,
+                b.short_name AS recipient_bank_short_name
+            FROM transactions AS t
+            LEFT JOIN saved_recipients AS r
+                ON t.to_account_id = r.id
+            LEFT JOIN banks AS b
+                ON r.bank_id = b.id
+            WHERE 
+                t.from_account_id = ? 
+                OR t.to_account_id = ?
+            ORDER BY 
+                t.date_issued DESC
+            LIMIT ?;
             """,
             (account_id, account_id, limit),
         )
@@ -238,18 +262,22 @@ class BankingDatabase:
         finally:
             conn.close()
 
-    def get_saved_recipients(self, owner_account_id: int) -> list[SavedRecipient]:
+    def get_saved_recipients(self, owner_account_id: int, recipient_name: str | None = None) -> list[SavedRecipient]:
         conn = self.get_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            """
+
+        sql = """
             SELECT sr.id, sr.owner_account_id, sr.account_number, sr.account_name, sr.bank_id, b.short_name as bank_name, sr.created_at
             FROM saved_recipients as sr 
             LEFT JOIN banks as b
-            WHERE b.id = sr.bank_id AND owner_account_id = ?
-            """,
-            (owner_account_id,),
-        )
+            WHERE b.id = sr.bank_id AND owner_account_id = ?"""
+
+        params = [owner_account_id]
+        if recipient_name:
+            sql += f" AND sr.account_name LIKE ?"
+            params.append(f"%{recipient_name}%")
+
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
         conn.close()
         return [SavedRecipient(**dict(row)) for row in rows]
@@ -317,3 +345,19 @@ class BankingDatabase:
         if not bank:
             return None
         return Bank(**dict(bank))
+
+    def list_banks(self) -> List[Bank]:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECt * FROM banks
+            """
+        )
+
+        rows = cursor.fetchall()
+        conn.close()
+        return [Bank(**dict(row)) for row in rows]
+
+
+db = BankingDatabase(settings.DATABASE_URL)

@@ -56,6 +56,11 @@ class TransactionCreate(TransactionBase):
 
 class Transaction(TransactionBase):
     id: int
+    recipient_account_number: int
+    recipient_account_name: str
+    recipient_bank_id: int
+    recipient_bank_name: str
+    recipient_bank_short_name: str
     created_at: datetime = Field(default=datetime.now(timezone.utc))
     updated_at: datetime = Field(default=datetime.now(timezone.utc))
 

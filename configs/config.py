@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Literal
 
 from dotenv import load_dotenv
 
@@ -12,19 +12,12 @@ class Settings:
     PORT: int = int(os.environ.get("RS_PORT", "8005"))
     DATABASE_URL: str = os.environ.get("DATABASE_URL", "banking.db")
     MCP_PATH: str = os.environ.get("MCP_PATH", "/mcp")
-
-    GOOGLE_CLIENT_ID: str = os.environ.get("GOOGLE_CLIENT_ID", "")
-    GOOGLE_CLIENT_SECRET: str = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-    REDIRECT_PATH: str = os.environ.get("GOOGLE_REDIRECT_PATH", "/auth/callback")
-    REQUIRED_SCOPES: List[str] = (
-        "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile".split()
+    ENVIRONMENT: Literal["develop", "production"] = os.environ.get(
+        "ENVIRONMENT", "develop"
     )
-    ALLOWED_CLIENT_REDIRECTS: List[str] = os.environ.get(
-        "ALLOWED_CLIENT_REDIRECTS", "http://localhost:*;http://127.0.0.1:*"
-    ).split(";")
+    AUTHENTICATE_PROVIDER: Literal["jwt", "scalekit"] = "jwt"
 
     RESOURCE: str = f"{BASE_URL}{MCP_PATH}"
-    JWKS_PATH: str = os.environ.get("JWKS_PATH", "jwks.json")
 
     # ScaleKit Configuration
     SCALEKIT_ENVIRONMENT_URL: str = os.environ.get("SCALEKIT_ENVIRONMENT_URL", "")
