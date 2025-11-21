@@ -103,7 +103,7 @@ class BankingDatabase:
             """
             INSERT INTO accounts (id, email, account_number, account_name, balance)
             VALUES 
-                (1,'long.td@com.vn', '1234567890', 'Trần Đình Long', 500000000);
+                (1,'long.th@com.vn', '1234567890', 'Trần Huỳnh Long', 500000000);
         """
         )
 
