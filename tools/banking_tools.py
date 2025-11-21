@@ -183,6 +183,13 @@ async def transfer_money(
                 "message": "Số dư không đủ để thực hiện giao dịch!",
             }
 
+        receiver = db.get_saved_recipient(account.id, to_account_number)
+        if not receiver:
+            return {
+                "status": "failed",
+                "message": "Không tìm thấy người nhận"
+            }
+
         # Perform transfer
         success = db.transfer_money(
             account.account_number, to_account_number, amount, description
@@ -200,7 +207,9 @@ async def transfer_money(
                 "message": "Chuyển khoản thành công!",
                 "from_email": email,
                 "from_account": str(account.account_number),
-                "to_account": str(to_account_number),
+                "receiver_account": str(to_account_number),
+                "receiver_name": receiver.account_name,
+                "receiver_bank": receiver.bank_name,
                 "amount": f"{amount:,.0f} VND",
                 "description": description,
             }
